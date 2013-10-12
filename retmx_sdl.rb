@@ -1,6 +1,6 @@
 =begin
 #Libreria para leer archivo TMX de mapeditor.org
- (C) 2011 Jovany Leandro G.C <info@manadalibre.org>
+ (C) 2013 Jovany Leandro G.C <bit4bit@riseup.net>
 
   This file is part of retmx.
 
