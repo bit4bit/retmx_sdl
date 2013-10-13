@@ -2,6 +2,7 @@ retmx_sdl
 =========
 Renderiza TMX usando libreria *rubysdl*
 
+Actualmente solo orientación *orthogonal*.
 
 ```ruby
  require 'retmx'
