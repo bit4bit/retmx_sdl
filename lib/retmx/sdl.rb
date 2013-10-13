@@ -18,7 +18,6 @@
     along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
 =end
 
-
 require 'sdl'
 
 
@@ -70,8 +69,8 @@ module RETMX
       raise NameError, "Can get layer of name #{name}" unless @tmx.layers.include? name
       raise RuntimeError, "Need SDL::Surface" unless surface.kind_of? SDL::Surface
 
-      @tmx.layers[name].render {|layer, bx, by, tileset, index|
-        pos = tileset.at(index)
+      @tmx.layers[name].render {|layer, bx, by, tileset, rect|
+        pos = rect
         alpha_now = @tileset_images[tileset.name].alpha
         image = @tileset_images[tileset.name]
         image.setAlpha(SDL::SRCALPHA, layer.opacity * SDL::ALPHA_OPAQUE)
@@ -84,6 +83,7 @@ module RETMX
       }
     end
 
+    #Draws al layer at once
     def blit_layers(sx, sy, sw, sh, surface, dx, dy)
       @tmx.layers.each {|name, layer|
         blit_layer(name, sx, sy, sw, sh, surface, dx, dy)
@@ -101,8 +101,8 @@ module RETMX
       raise NameError, "Can get layer of name #{name}" unless @tmx.layers.include? name
       raise RuntimeError, "Need SDL::Surface" unless surface.kind_of? SDL::Surface
 
-      @tmx.layers[name].render_partial(sx, sy, sw, sh) { |layer, bx, by, tileset, index|
-        pos = tileset.at(index)
+      @tmx.layers[name].render_partial(sx, sy, sw, sh) { |layer, bx, by, tileset, rect|
+        pos = rect
         alpha_now = @tileset_images[tileset.name].alpha
         image = @tileset_images[tileset.name]
         image.setAlpha(SDL::SRCALPHA, layer.opacity * SDL::ALPHA_OPAQUE)
@@ -114,32 +114,38 @@ module RETMX
         image.setAlpha(SDL::SRCALPHA, alpha_now)
       }
     end
-  end
-end
 
-if $0 == __FILE__
-  require 'retmx'
-  abort "#{$0}: <file .tmx> <layer name>" if ARGV.size != 2
+    #Perfoms a blit from layer at (+sx+,+sy+,+sw+,+sh+) to +surface+ at (+dx+, +dy) on pixels
+    #:sx: on pixel
+    #:sy: on pixel
+    #:sw: on pixel
+    #:sh: on pixel
+    #:dx: on pixel
+    #:dy: on pixel
+    def blit_layer_pixel(name, sx, sy, sw, sh, surface, dx, dy)
+      raise NameError, "Can get layer of name #{name}" unless @tmx.layers.include? name
+      raise RuntimeError, "Need SDL::Surface" unless surface.kind_of? SDL::Surface
+      #create surface tmp for crop the rectangle ask
+      if sw == surface.w && sh == surface.h
+        tsurface = surface
+      else
+        tsurface = SDL::Surface.new(SDL::HWSURFACE|SDL::SRCALPHA, sw, sh, surface.format)
+      end
+      
+      @tmx.layers[name].render_partial_pixel(sx, sy, sw, sh) { |layer, bx, by, tileset, rect|
+        pos = rect
+        alpha_now = @tileset_images[tileset.name].alpha
+        image = @tileset_images[tileset.name]
+        image.setAlpha(SDL::SRCALPHA, layer.opacity * SDL::ALPHA_OPAQUE)
 
+        x =  tileset.tilewidth * bx  - (sx % tileset.tilewidth)
+        y =  tileset.tileheight * by - (sy % tileset.tileheight)
+        x += dx; y += dy
+        SDL::Surface.blit(image, pos.x, pos.y, pos.w, pos.h, tsurface, x, y)
+        image.setAlpha(SDL::SRCALPHA, alpha_now)
+      }
 
-  SDL.init(SDL::INIT_VIDEO)
-  $quit = false
-
-  tmx = RETMX.load(ARGV[0])
-  tmxsdl = RETMX::TMXSDL.new(tmx)
-  $screen = SDL.setVideoMode(640, 480, 0, 0)
-
-
-  #Blit specific layer
-  #tmxsdl.blit_layers(0,0,9,8, $screen, 0, 0)
-  #tmxsdl.put_layers($screen, 0, 0)
-  tmxsdl.put_layer(ARGV[1], $screen, 0, 0)
-  $screen.flip
-  until $quit
-    e = SDL::Event.wait
-    case e
-    when SDL::Event::Quit
-      $quit = true
+      SDL::Surface.blit(tsurface, 0, 0, 0, 0, surface, dx, dy) unless sw == surface.w && sh == surface.h
     end
   end
 end
