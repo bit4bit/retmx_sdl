@@ -1,8 +1,10 @@
 retmx_sdl
 =========
 Renderiza TMX usando libreria *rubysdl*
+Render TileMap XML file with *rubysdl*
 
 Actualmente solo orientación *orthogonal*.
+Now only works *orthogona*
 
 ```ruby
  require 'retmx'
@@ -20,6 +22,3 @@ Actualmente solo orientación *orthogonal*.
  #draw with source on pixel
  tmxsdl.blit_layer_pixel('layername', 0, 0, 640, 300, $screen, 0, 0)
 ```
-
-
-Render TMX Map Form with rubysdl
